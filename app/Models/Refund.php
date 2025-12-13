@@ -12,15 +12,17 @@ class Refund extends Model
         'charge_id',
         'date',
         'amount',
+        'initial_amount_charged',
         'stripe_refund_id',
         'stripe_transaction_id',
-        'program',
+        'reason',
         'notes',
     ];
 
     protected $casts = [
         'date' => 'date',
         'amount' => 'decimal:2',
+        'initial_amount_charged' => 'decimal:2',
     ];
 
     public function client(): BelongsTo

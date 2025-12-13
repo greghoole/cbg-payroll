@@ -126,7 +126,7 @@
             <code class="text-lg">/api/stripe/refund</code>
         </p>
         <p class="text-gray-600 mb-4">
-            Creates or updates a refund record. The client must already exist (created via a charge).
+            Creates or updates a refund record. If the client doesn't exist, it will be created automatically.
         </p>
 
         <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Request Body</h3>
@@ -136,10 +136,12 @@
   "amount": 50.00,
   "email_address": "client@example.com",
   "client_name": "Client Name",
-  "stripe_refund_id": "re_xxxxx",
+  "client_stripe_id": "cus_xxxxx",
   "transaction_id": "txn_xxxxx",
+  "stripe_refund_id": "re_xxxxx",
   "charge_id": "ch_xxxxx",
-  "program": "Program Name",
+  "reason": "Refund reason",
+  "initial_amount_charged": 110.00,
   "notes": "Refund notes"
 }</code></pre>
         </div>
@@ -148,16 +150,18 @@
         <ul class="list-disc list-inside text-gray-700 mb-4 space-y-1">
             <li><code class="bg-gray-100 px-1 rounded">date</code> - Date in YYYY-MM-DD format</li>
             <li><code class="bg-gray-100 px-1 rounded">amount</code> - Refund amount (numeric)</li>
-            <li><code class="bg-gray-100 px-1 rounded">email_address</code> - Client email address (client must exist)</li>
-            <li><code class="bg-gray-100 px-1 rounded">stripe_refund_id</code> - Stripe refund ID (unique identifier)</li>
+            <li><code class="bg-gray-100 px-1 rounded">email_address</code> - Client email address</li>
+            <li><code class="bg-gray-100 px-1 rounded">transaction_id</code> - Stripe transaction ID (unique identifier)</li>
         </ul>
 
         <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Optional Fields</h3>
         <ul class="list-disc list-inside text-gray-700 mb-4 space-y-1">
             <li><code class="bg-gray-100 px-1 rounded">client_name</code> - Client name</li>
-            <li><code class="bg-gray-100 px-1 rounded">transaction_id</code> - Stripe transaction ID</li>
+            <li><code class="bg-gray-100 px-1 rounded">client_stripe_id</code> - Stripe customer ID</li>
+            <li><code class="bg-gray-100 px-1 rounded">stripe_refund_id</code> - Stripe refund ID</li>
             <li><code class="bg-gray-100 px-1 rounded">charge_id</code> - Stripe charge ID (to link refund to charge)</li>
-            <li><code class="bg-gray-100 px-1 rounded">program</code> - Program name</li>
+            <li><code class="bg-gray-100 px-1 rounded">reason</code> - Refund reason</li>
+            <li><code class="bg-gray-100 px-1 rounded">initial_amount_charged</code> - Original amount charged before refund (numeric)</li>
             <li><code class="bg-gray-100 px-1 rounded">notes</code> - Additional notes</li>
         </ul>
 
@@ -174,77 +178,35 @@
         <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Error Responses</h3>
         <div class="space-y-4">
             <div>
-                <p class="text-gray-700 mb-2"><span class="font-semibold">404 Not Found</span> - Client doesn't exist</p>
+                <p class="text-gray-700 mb-2"><span class="font-semibold">401 Unauthorized</span> - Invalid or missing API token</p>
                 <div class="bg-gray-50 p-4 rounded-md">
                     <pre class="text-sm overflow-x-auto"><code>{
   "success": false,
-  "message": "Client not found. Please create a charge first."
+  "message": "Unauthorized. Invalid or missing bearer token."
+}</code></pre>
+                </div>
+            </div>
+            <div>
+                <p class="text-gray-700 mb-2"><span class="font-semibold">422 Validation Error</span> - Invalid request data</p>
+                <div class="bg-gray-50 p-4 rounded-md">
+                    <pre class="text-sm overflow-x-auto"><code>{
+  "success": false,
+  "message": "Validation failed",
+  "errors": {
+    "transaction_id": ["The transaction id field is required."]
+  }
 }</code></pre>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Integration Examples</h2>
-
-        <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">cURL Example</h3>
-        <div class="bg-gray-50 p-4 rounded-md mb-4">
-            <pre class="text-sm overflow-x-auto"><code>curl -X POST {{ url('/api/stripe/charge') }} \
-  -H "Authorization: Bearer your-api-token" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "date": "2024-01-15",
-    "net": 100.00,
-    "email_address": "client@example.com",
-    "client_name": "Client Name",
-    "amount_charged": 110.00,
-    "transaction_id": "txn_123456"
-  }'</code></pre>
-        </div>
-
-        <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">JavaScript (Fetch) Example</h3>
-        <div class="bg-gray-50 p-4 rounded-md mb-4">
-            <pre class="text-sm overflow-x-auto"><code>fetch('{{ url('/api/stripe/charge') }}', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer your-api-token',
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    date: '2024-01-15',
-    net: 100.00,
-    email_address: 'client@example.com',
-    client_name: 'Client Name',
-    amount_charged: 110.00,
-    transaction_id: 'txn_123456'
-  })
-})
-.then(response => response.json())
-.then(data => console.log(data));</code></pre>
-        </div>
-
-        <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">N8N HTTP Request Node</h3>
-        <p class="text-gray-700 mb-2">
-            Configure your N8N HTTP Request node with:
-        </p>
-        <ul class="list-disc list-inside text-gray-700 mb-4 space-y-1">
-            <li><strong>Method:</strong> POST</li>
-            <li><strong>URL:</strong> <code class="bg-gray-100 px-1 rounded">{{ url('/api/stripe/charge') }}</code></li>
-            <li><strong>Authentication:</strong> Generic Credential Type</li>
-            <li><strong>Name:</strong> Authorization</li>
-            <li><strong>Value:</strong> Bearer your-api-token</li>
-            <li><strong>Send Body:</strong> Yes</li>
-            <li><strong>Body Content Type:</strong> JSON</li>
-        </ul>
-    </div>
-
     <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 class="text-lg font-semibold text-blue-900 mb-2">Important Notes</h3>
         <ul class="list-disc list-inside text-blue-800 space-y-2">
-            <li>Charges are identified by <code class="bg-blue-100 px-1 rounded">transaction_id</code> - duplicate transaction IDs will update existing records</li>
-            <li>Refunds are identified by <code class="bg-blue-100 px-1 rounded">stripe_refund_id</code> - duplicate refund IDs will update existing records</li>
-            <li>Clients are automatically created when a charge is received with a new email address</li>
+            <li>Both charges and refunds are identified by <code class="bg-blue-100 px-1 rounded">transaction_id</code> - duplicate transaction IDs will update existing records</li>
+            <li>Clients are automatically created when a charge or refund is received with a new email address</li>
+            <li>If a client already exists (by email address), the charge or refund will be associated with that existing client</li>
             <li>If a coach is provided in the charge, the coach will be automatically created and assigned to the client</li>
             <li>Commission rates must be set manually in the web interface after coaches are assigned</li>
         </ul>

@@ -35,19 +35,31 @@ class StripeDataController extends Controller
                 'coach' => 'nullable|string', // Coach name or email
             ]);
 
-            // Find or create client by email
+            // Find or create client by email address
             $client = Client::firstOrCreate(
                 ['email' => $validated['email_address']],
                 [
                     'name' => $validated['client_name'],
-                    'stripe_customer_id' => $validated['client_stripe_id'],
+                    'stripe_customer_id' => $validated['client_stripe_id'] ?? null,
                     'country' => $validated['country'] ?? null,
                 ]
             );
 
-            // Update client info if needed
-            if (!$client->stripe_customer_id && $validated['client_stripe_id']) {
+            // Update client info if new data is provided (for existing clients)
+            $updated = false;
+            if ($validated['client_name'] && $client->name !== $validated['client_name']) {
+                $client->name = $validated['client_name'];
+                $updated = true;
+            }
+            if ($validated['client_stripe_id'] && $client->stripe_customer_id !== $validated['client_stripe_id']) {
                 $client->stripe_customer_id = $validated['client_stripe_id'];
+                $updated = true;
+            }
+            if (isset($validated['country']) && $client->country !== $validated['country']) {
+                $client->country = $validated['country'];
+                $updated = true;
+            }
+            if ($updated) {
                 $client->save();
             }
 
@@ -112,21 +124,37 @@ class StripeDataController extends Controller
                 'amount' => 'required|numeric',
                 'email_address' => 'required|email',
                 'client_name' => 'nullable|string',
-                'stripe_refund_id' => 'required|string',
-                'transaction_id' => 'nullable|string',
+                'client_stripe_id' => 'nullable|string',
+                'stripe_refund_id' => 'nullable|string',
+                'transaction_id' => 'required|string',
                 'charge_id' => 'nullable|string', // Stripe charge ID
-                'program' => 'nullable|string',
+                'reason' => 'nullable|string',
+                'initial_amount_charged' => 'nullable|numeric',
                 'notes' => 'nullable|string',
             ]);
 
-            // Find client by email
-            $client = Client::where('email', $validated['email_address'])->first();
+            // Find or create client by email address
+            $client = Client::firstOrCreate(
+                ['email' => $validated['email_address']],
+                [
+                    'name' => $validated['client_name'] ?? 'Unknown',
+                    'stripe_customer_id' => $validated['client_stripe_id'] ?? null,
+                    'country' => null,
+                ]
+            );
 
-            if (!$client) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Client not found. Please create a charge first.',
-                ], 404);
+            // Update client info if new data is provided (for existing clients)
+            $updated = false;
+            if (!empty($validated['client_name']) && $client->name !== $validated['client_name']) {
+                $client->name = $validated['client_name'];
+                $updated = true;
+            }
+            if (!empty($validated['client_stripe_id']) && $client->stripe_customer_id !== $validated['client_stripe_id']) {
+                $client->stripe_customer_id = $validated['client_stripe_id'];
+                $updated = true;
+            }
+            if ($updated) {
+                $client->save();
             }
 
             // Find related charge if charge_id is provided
@@ -137,16 +165,17 @@ class StripeDataController extends Controller
                     ->first();
             }
 
-            // Create refund
+            // Find or create refund by transaction_id (primary identifier)
             $refund = Refund::updateOrCreate(
-                ['stripe_refund_id' => $validated['stripe_refund_id']],
+                ['stripe_transaction_id' => $validated['transaction_id']],
                 [
                     'client_id' => $client->id,
                     'charge_id' => $charge?->id,
                     'date' => $validated['date'],
                     'amount' => $validated['amount'],
-                    'stripe_transaction_id' => $validated['transaction_id'] ?? null,
-                    'program' => $validated['program'] ?? null,
+                    'initial_amount_charged' => $validated['initial_amount_charged'] ?? null,
+                    'stripe_refund_id' => $validated['stripe_refund_id'] ?? null,
+                    'reason' => $validated['reason'] ?? null,
                     'notes' => $validated['notes'] ?? null,
                 ]
             );

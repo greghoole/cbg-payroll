@@ -38,5 +38,6 @@ Route::middleware('auth')->group(function () {
     
     Route::middleware('admin')->group(function () {
         Route::resource('admins', \App\Http\Controllers\AdminController::class)->except(['show']);
+        Route::post('/settings/reset-data', [\App\Http\Controllers\SettingsController::class, 'resetData'])->name('settings.reset-data');
     });
 });

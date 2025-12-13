@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Models\Charge;
+use App\Models\Refund;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -26,5 +28,19 @@ class SettingsController extends Controller
         Setting::set('api_token', $newToken);
 
         return redirect()->route('settings.index')->with('success', 'API token regenerated successfully. Make sure to update your integrations with the new token.');
+    }
+
+    /**
+     * Reset all data by deleting all charges and refunds.
+     */
+    public function resetData(Request $request)
+    {
+        // Delete all refunds first (due to foreign key constraints)
+        Refund::query()->delete();
+        
+        // Delete all charges
+        Charge::query()->delete();
+
+        return redirect()->route('settings.index')->with('success', 'All charges and refunds have been deleted successfully.');
     }
 }
