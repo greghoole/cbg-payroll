@@ -7,6 +7,19 @@
     <title>@yield('title', 'Payroll System') - {{ config('app.name', 'Laravel') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        nav .sm\\:flex button[type="button"] {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            font: inherit;
+            cursor: pointer;
+            line-height: inherit;
+            display: inline-flex;
+            align-items: center;
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     @auth
@@ -17,28 +30,67 @@
                     <div class="flex-shrink-0 flex items-center">
                         <a href="{{ route('dashboard') }}" class="text-xl font-bold text-gray-900">Payroll System</a>
                     </div>
-                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                        <a href="{{ route('dashboard') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8 sm:items-center">
+                        <!-- Dashboard -->
+                        <a href="{{ route('dashboard') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('dashboard') ? 'border-indigo-500 text-gray-900' : '' }}">
                             Dashboard
                         </a>
-                        <a href="{{ route('coaches.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Coaches
-                        </a>
-                        <a href="{{ route('appointment-setters.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Appointment Setters
-                        </a>
-                        <a href="{{ route('closers.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            Closers
-                        </a>
-                        <a href="{{ route('clients.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+
+                        <!-- Financials Dropdown -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" type="button" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('charges.*', 'refunds.*', 'one-off-cash-ins.*') ? 'border-indigo-500 text-gray-900' : '' }}">
+                                Financials
+                                <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50" style="display: none;">
+                                <div class="py-1" role="menu" aria-orientation="vertical">
+                                    <a href="{{ route('charges.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('charges.*') ? 'bg-gray-50' : '' }}" role="menuitem">
+                                        Charges
+                                    </a>
+                                    <a href="{{ route('refunds.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('refunds.*') ? 'bg-gray-50' : '' }}" role="menuitem">
+                                        Refunds
+                                    </a>
+                                    <a href="{{ route('one-off-cash-ins.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('one-off-cash-ins.*') ? 'bg-gray-50' : '' }}" role="menuitem">
+                                        One-Off Cash Ins
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Staff Dropdown -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open" type="button" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('coaches.*', 'appointment-setters.*', 'closers.*') ? 'border-indigo-500 text-gray-900' : '' }}">
+                                Staff
+                                <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50" style="display: none;">
+                                <div class="py-1" role="menu" aria-orientation="vertical">
+                                    <a href="{{ route('coaches.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('coaches.*') ? 'bg-gray-50' : '' }}" role="menuitem">
+                                        Coaches
+                                    </a>
+                                    <a href="{{ route('appointment-setters.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('appointment-setters.*') ? 'bg-gray-50' : '' }}" role="menuitem">
+                                        Appointment Setters
+                                    </a>
+                                    <a href="{{ route('closers.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('closers.*') ? 'bg-gray-50' : '' }}" role="menuitem">
+                                        Closers
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Clients -->
+                        <a href="{{ route('clients.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('clients.*') ? 'border-indigo-500 text-gray-900' : '' }}">
                             Clients
                         </a>
-                        <a href="{{ route('one-off-cash-ins.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-                            One-Off Cash Ins
-                        </a>
+
+                        <!-- Admins (only for admins) -->
                         @auth
                             @if(auth()->user()->is_admin)
-                            <a href="{{ route('admins.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            <a href="{{ route('admins.index') }}" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('admins.*') ? 'border-indigo-500 text-gray-900' : '' }}">
                                 Admins
                             </a>
                             @endif

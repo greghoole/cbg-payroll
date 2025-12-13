@@ -22,6 +22,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('closers', \App\Http\Controllers\CloserController::class);
     Route::resource('clients', \App\Http\Controllers\ClientController::class);
     Route::resource('one-off-cash-ins', \App\Http\Controllers\OneOffCashInController::class)->except(['show']);
+    Route::get('/charges', [\App\Http\Controllers\ChargeController::class, 'index'])->name('charges.index');
+    Route::get('/refunds', [\App\Http\Controllers\RefundController::class, 'index'])->name('refunds.index');
     
     // Profile routes
     Route::get('/profile/password', [\App\Http\Controllers\ProfileController::class, 'editPassword'])->name('profile.password.edit');
