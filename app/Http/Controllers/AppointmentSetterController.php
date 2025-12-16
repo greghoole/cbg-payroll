@@ -31,24 +31,48 @@ class AppointmentSetterController extends Controller
         return redirect()->route('appointment-setters.index')->with('success', 'Appointment Setter created successfully.');
     }
 
-    public function show(AppointmentSetter $appointmentSetter)
+    public function show(Request $request, AppointmentSetter $appointmentSetter)
     {
-        $appointmentSetter->load('clients');
+        $appointmentSetter->load('clients.charges');
         
-        // Calculate commission for this appointment setter
+        // Calculate commission for this appointment setter based on charges
         $commissionFromCharges = 0;
+        $commissionsByMonth = [];
+        
         foreach ($appointmentSetter->clients as $client) {
             $commissionRate = $client->pivot->commission_rate ?? 0;
-            $clientCharges = $client->charges()->sum('net');
-            $commissionFromCharges += ($clientCharges * $commissionRate) / 100;
+            foreach ($client->charges as $charge) {
+                if ($charge->net && $commissionRate) {
+                    $commission = ($charge->net * $commissionRate) / 100;
+                    $commissionFromCharges += $commission;
+                    
+                    // Group by month (YYYY-MM format)
+                    $monthKey = $charge->date->format('Y-m');
+                    if (!isset($commissionsByMonth[$monthKey])) {
+                        $commissionsByMonth[$monthKey] = [
+                            'month' => $charge->date->format('F Y'),
+                            'year' => $charge->date->format('Y'),
+                            'month_number' => $charge->date->format('m'),
+                            'total' => 0,
+                        ];
+                    }
+                    $commissionsByMonth[$monthKey]['total'] += $commission;
+                }
+            }
         }
         
-        return view('appointment-setters.show', compact('appointmentSetter', 'commissionFromCharges'));
+        // Sort by most recent month first (descending)
+        krsort($commissionsByMonth);
+        
+        // Sort clients alphabetically by name (no filtering - done client-side)
+        $clients = $appointmentSetter->clients->sortBy('name')->values();
+        
+        return view('appointment-setters.show', compact('appointmentSetter', 'commissionFromCharges', 'commissionsByMonth', 'clients'));
     }
 
     public function edit(AppointmentSetter $appointmentSetter)
     {
-        $clients = Client::all();
+        $clients = Client::orderBy('name')->get();
         $appointmentSetter->load('clients');
         return view('appointment-setters.edit', compact('appointmentSetter', 'clients'));
     }

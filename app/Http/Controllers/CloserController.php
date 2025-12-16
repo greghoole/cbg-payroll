@@ -31,24 +31,48 @@ class CloserController extends Controller
         return redirect()->route('closers.index')->with('success', 'Closer created successfully.');
     }
 
-    public function show(Closer $closer)
+    public function show(Request $request, Closer $closer)
     {
-        $closer->load('clients');
+        $closer->load('clients.charges');
         
-        // Calculate commission for this closer
+        // Calculate commission for this closer based on charges
         $commissionFromCharges = 0;
+        $commissionsByMonth = [];
+        
         foreach ($closer->clients as $client) {
             $commissionRate = $client->pivot->commission_rate ?? 0;
-            $clientCharges = $client->charges()->sum('net');
-            $commissionFromCharges += ($clientCharges * $commissionRate) / 100;
+            foreach ($client->charges as $charge) {
+                if ($charge->net && $commissionRate) {
+                    $commission = ($charge->net * $commissionRate) / 100;
+                    $commissionFromCharges += $commission;
+                    
+                    // Group by month (YYYY-MM format)
+                    $monthKey = $charge->date->format('Y-m');
+                    if (!isset($commissionsByMonth[$monthKey])) {
+                        $commissionsByMonth[$monthKey] = [
+                            'month' => $charge->date->format('F Y'),
+                            'year' => $charge->date->format('Y'),
+                            'month_number' => $charge->date->format('m'),
+                            'total' => 0,
+                        ];
+                    }
+                    $commissionsByMonth[$monthKey]['total'] += $commission;
+                }
+            }
         }
         
-        return view('closers.show', compact('closer', 'commissionFromCharges'));
+        // Sort by most recent month first (descending)
+        krsort($commissionsByMonth);
+        
+        // Sort clients alphabetically by name (no filtering - done client-side)
+        $clients = $closer->clients->sortBy('name')->values();
+        
+        return view('closers.show', compact('closer', 'commissionFromCharges', 'commissionsByMonth', 'clients'));
     }
 
     public function edit(Closer $closer)
     {
-        $clients = Client::all();
+        $clients = Client::orderBy('name')->get();
         $closer->load('clients');
         return view('closers.edit', compact('closer', 'clients'));
     }

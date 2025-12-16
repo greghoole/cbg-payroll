@@ -31,26 +31,46 @@ class CoachController extends Controller
         return redirect()->route('coaches.index')->with('success', 'Coach created successfully.');
     }
 
-    public function show(Coach $coach)
+    public function show(Request $request, Coach $coach)
     {
         $coach->load('clients.charges');
         
         // Calculate commission for this coach based on charge commission_percentage
         $commissionFromCharges = 0;
+        $commissionsByMonth = [];
+        
         foreach ($coach->clients as $client) {
             foreach ($client->charges as $charge) {
                 if ($charge->commission_percentage && $charge->payout) {
                     $commissionFromCharges += $charge->payout;
+                    
+                    // Group by month (YYYY-MM format)
+                    $monthKey = $charge->date->format('Y-m');
+                    if (!isset($commissionsByMonth[$monthKey])) {
+                        $commissionsByMonth[$monthKey] = [
+                            'month' => $charge->date->format('F Y'),
+                            'year' => $charge->date->format('Y'),
+                            'month_number' => $charge->date->format('m'),
+                            'total' => 0,
+                        ];
+                    }
+                    $commissionsByMonth[$monthKey]['total'] += $charge->payout;
                 }
             }
         }
         
-        return view('coaches.show', compact('coach', 'commissionFromCharges'));
+        // Sort by most recent month first (descending)
+        krsort($commissionsByMonth);
+        
+        // Sort clients alphabetically by name (no filtering - done client-side)
+        $clients = $coach->clients->sortBy('name')->values();
+        
+        return view('coaches.show', compact('coach', 'commissionFromCharges', 'commissionsByMonth', 'clients'));
     }
 
     public function edit(Coach $coach)
     {
-        $clients = Client::all();
+        $clients = Client::orderBy('name')->get();
         $coach->load('clients');
         return view('coaches.edit', compact('coach', 'clients'));
     }
