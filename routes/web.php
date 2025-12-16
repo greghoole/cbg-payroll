@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('charges', \App\Http\Controllers\ChargeController::class)->except(['show']);
     Route::post('/charges/{charge}/update-commission', [\App\Http\Controllers\ChargeController::class, 'updateCommission'])->name('charges.update-commission');
     Route::resource('refunds', \App\Http\Controllers\RefundController::class)->except(['show']);
+    Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
     
     // Profile routes
     Route::get('/profile/password', [\App\Http\Controllers\ProfileController::class, 'editPassword'])->name('profile.password.edit');

@@ -40,7 +40,7 @@
 
                         <!-- Financials Dropdown -->
                         <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" type="button" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('charges.*', 'refunds.*') ? 'border-indigo-500 text-gray-900' : '' }}">
+                            <button @click="open = !open" type="button" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('charges.*', 'refunds.*', 'payroll.*') ? 'border-indigo-500 text-gray-900' : '' }}">
                                 Financials
                                 <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -53,6 +53,9 @@
                                     </a>
                                     <a href="{{ route('refunds.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('refunds.*') ? 'bg-gray-50' : '' }}" role="menuitem">
                                         Refunds
+                                    </a>
+                                    <a href="{{ route('payroll.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('payroll.*') ? 'bg-gray-50' : '' }}" role="menuitem">
+                                        Payroll
                                     </a>
                                 </div>
                             </div>

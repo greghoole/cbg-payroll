@@ -63,6 +63,24 @@ class StripeDataController extends Controller
                 $client->save();
             }
 
+            // If coach is provided, assign coach to client
+            $coach = null;
+            if (!empty($validated['coach'])) {
+                $coach = Coach::firstOrCreate(
+                    ['name' => $validated['coach']],
+                    ['email' => null]
+                );
+
+                // Assign coach to client (1:1 relationship)
+                if ($client->coach_id !== $coach->id) {
+                    $client->update(['coach_id' => $coach->id]);
+                }
+            } else {
+                // If no coach provided, check if client already has a coach
+                $client->load('coach');
+                $coach = $client->coach;
+            }
+
             // Find or create charge
             $charge = Charge::updateOrCreate(
                 ['stripe_transaction_id' => $validated['transaction_id']],
@@ -79,16 +97,19 @@ class StripeDataController extends Controller
                 ]
             );
 
-            // If coach is provided, assign coach to client
-            if (!empty($validated['coach'])) {
-                $coach = Coach::firstOrCreate(
-                    ['name' => $validated['coach']],
-                    ['email' => null]
-                );
-
-                // Assign coach to client (1:1 relationship)
-                if ($client->coach_id !== $coach->id) {
-                    $client->update(['coach_id' => $coach->id]);
+            // If client has a coach and charge doesn't have commission, apply existing commission
+            if ($coach && !$charge->commission_percentage) {
+                // Find the most recent charge for this client with a commission percentage
+                $existingCharge = Charge::where('client_id', $client->id)
+                    ->where('id', '!=', $charge->id)
+                    ->whereNotNull('commission_percentage')
+                    ->orderBy('date', 'desc')
+                    ->first();
+                
+                if ($existingCharge) {
+                    $charge->commission_percentage = $existingCharge->commission_percentage;
+                    // Payout will be auto-calculated by the model's boot method
+                    $charge->save();
                 }
             }
 

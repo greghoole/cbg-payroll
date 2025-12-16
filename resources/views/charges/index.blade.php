@@ -121,7 +121,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style="max-width: 200px;">Program</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coach</th>
@@ -140,7 +140,9 @@
                                 {{ $charge->client->name }}
                             </a>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $charge->program ?? '—' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500" style="max-width: 200px;">
+                            <div class="truncate" title="{{ $charge->program ?? '—' }}">{{ $charge->program ?? '—' }}</div>
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${{ number_format($charge->amount_charged, 2) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">${{ number_format($charge->net, 2) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

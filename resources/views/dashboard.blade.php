@@ -148,8 +148,9 @@
 
     <!-- Top Coaches by Commission -->
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
             <h3 class="text-lg leading-6 font-medium text-gray-900">Top Coaches by Commission</h3>
+            <a href="{{ route('coaches.index') }}" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">View All</a>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
