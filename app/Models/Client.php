@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Client extends Model
@@ -13,6 +14,7 @@ class Client extends Model
         'name',
         'stripe_customer_id',
         'country',
+        'coach_id',
     ];
 
     public function charges(): HasMany
@@ -25,11 +27,9 @@ class Client extends Model
         return $this->hasMany(Refund::class);
     }
 
-    public function coaches(): BelongsToMany
+    public function coach(): BelongsTo
     {
-        return $this->belongsToMany(Coach::class)
-            ->withPivot('commission_rate')
-            ->withTimestamps();
+        return $this->belongsTo(Coach::class);
     }
 
     public function appointmentSetters(): BelongsToMany

@@ -29,21 +29,17 @@
         </div>
 
         <div class="mb-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Assign Clients & Commission Rates</h3>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Assign Clients</h3>
+            <p class="text-sm text-gray-500 mb-4">Note: Commission rates are set per charge, not per client-coach relationship.</p>
             <div class="space-y-3">
                 @foreach(\App\Models\Client::all() as $client)
-                <div class="flex items-center justify-between border-b pb-2">
+                <div class="flex items-center border-b pb-2">
                     <label class="flex items-center">
                         <input type="checkbox" name="clients[{{ $client->id }}][assigned]" value="1"
-                            {{ $coach->clients->contains($client->id) ? 'checked' : '' }}
+                            {{ $client->coach_id == $coach->id ? 'checked' : '' }}
                             class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                         <span class="ml-2 text-sm text-gray-700">{{ $client->name }} ({{ $client->email }})</span>
                     </label>
-                    <input type="number" step="0.01" min="0" max="100" 
-                        name="clients[{{ $client->id }}][commission_rate]"
-                        value="{{ $coach->clients->contains($client->id) ? ($coach->clients->find($client->id)->pivot->commission_rate ?? 0) : 0 }}"
-                        placeholder="Commission %"
-                        class="ml-4 w-24 px-3 py-2 rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm text-gray-900">
                 </div>
                 @endforeach
             </div>

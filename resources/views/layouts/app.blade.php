@@ -7,6 +7,8 @@
     <title>@yield('title', 'Payroll System') - {{ config('app.name', 'Laravel') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
     <style>
         nav .sm\\:flex button[type="button"] {
             background: none;
@@ -38,7 +40,7 @@
 
                         <!-- Financials Dropdown -->
                         <div class="relative" x-data="{ open: false }">
-                            <button @click="open = !open" type="button" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('charges.*', 'refunds.*', 'one-off-cash-ins.*') ? 'border-indigo-500 text-gray-900' : '' }}">
+                            <button @click="open = !open" type="button" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium {{ request()->routeIs('charges.*', 'refunds.*') ? 'border-indigo-500 text-gray-900' : '' }}">
                                 Financials
                                 <svg class="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -51,9 +53,6 @@
                                     </a>
                                     <a href="{{ route('refunds.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('refunds.*') ? 'bg-gray-50' : '' }}" role="menuitem">
                                         Refunds
-                                    </a>
-                                    <a href="{{ route('one-off-cash-ins.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {{ request()->routeIs('one-off-cash-ins.*') ? 'bg-gray-50' : '' }}" role="menuitem">
-                                        One-Off Cash Ins
                                     </a>
                                 </div>
                             </div>

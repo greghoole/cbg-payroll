@@ -19,9 +19,4 @@ class Closer extends Model
             ->withPivot('commission_rate')
             ->withTimestamps();
     }
-
-    public function oneOffCashIns(): HasMany
-    {
-        return $this->hasMany(OneOffCashIn::class, 'closer_id');
-    }
 }

@@ -86,9 +86,9 @@ class StripeDataController extends Controller
                     ['email' => null]
                 );
 
-                // Attach coach to client if not already attached
-                if (!$client->coaches->contains($coach->id)) {
-                    $client->coaches()->attach($coach->id, ['commission_rate' => 0]);
+                // Assign coach to client (1:1 relationship)
+                if ($client->coach_id !== $coach->id) {
+                    $client->update(['coach_id' => $coach->id]);
                 }
             }
 

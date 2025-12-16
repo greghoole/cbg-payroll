@@ -19,9 +19,4 @@ class AppointmentSetter extends Model
             ->withPivot('commission_rate')
             ->withTimestamps();
     }
-
-    public function oneOffCashIns(): HasMany
-    {
-        return $this->hasMany(OneOffCashIn::class, 'appointment_setter_id');
-    }
 }

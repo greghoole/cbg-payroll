@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Coach extends Model
@@ -13,15 +12,8 @@ class Coach extends Model
         'email',
     ];
 
-    public function clients(): BelongsToMany
+    public function clients(): HasMany
     {
-        return $this->belongsToMany(Client::class)
-            ->withPivot('commission_rate')
-            ->withTimestamps();
-    }
-
-    public function oneOffCashIns(): HasMany
-    {
-        return $this->hasMany(OneOffCashIn::class);
+        return $this->hasMany(Client::class);
     }
 }

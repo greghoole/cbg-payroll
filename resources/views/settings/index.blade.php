@@ -68,12 +68,12 @@
             <div class="bg-red-50 border-2 border-red-300 shadow-lg rounded-lg p-6 mb-6">
                 <h2 class="text-xl font-semibold text-red-900 mb-4">⚠️ Danger Zone</h2>
                 <p class="text-red-800 mb-4">
-                    <strong>Warning:</strong> This action is irreversible and will permanently delete all charges and refunds in the system. This cannot be undone.
+                    <strong>Warning:</strong> This action is irreversible and will permanently delete all charges, refunds, and clients in the system. This cannot be undone.
                 </p>
                 <p class="text-red-700 text-sm mb-6">
-                    Use this feature only when you need to completely reset the financial data. All charge and refund records will be permanently removed from the database.
+                    Use this feature only when you need to completely reset the financial data. All charge, refund, and client records will be permanently removed from the database.
                 </p>
-                <form action="{{ route('settings.reset-data') }}" method="POST" onsubmit="return confirm('⚠️ WARNING: This will permanently delete ALL charges and refunds in the system. This action CANNOT be undone.\n\nAre you absolutely sure you want to proceed?');">
+                <form action="{{ route('settings.reset-data') }}" method="POST" onsubmit="return confirm('⚠️ WARNING: This will permanently delete ALL charges, refunds, and clients in the system. This action CANNOT be undone.\n\nAre you absolutely sure you want to proceed?');">
                     @csrf
                     @method('POST')
                     <button type="submit" class="px-6 py-3 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors">

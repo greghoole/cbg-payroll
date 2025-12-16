@@ -83,8 +83,9 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
         <!-- Recent Charges -->
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Charges</h3>
+                <a href="{{ route('charges.index') }}" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">View All</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -114,8 +115,9 @@
 
         <!-- Recent Refunds -->
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Refunds</h3>
+                <a href="{{ route('refunds.index') }}" class="text-sm text-indigo-600 hover:text-indigo-900 font-medium">View All</a>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
@@ -154,17 +156,13 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coach</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commission</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">One-Off</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Commission</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($coaches as $coachData)
                     <tr>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">{{ $coachData['coach']->name }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${{ number_format($coachData['commission'], 2) }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${{ number_format($coachData['one_off'], 2) }}</td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${{ number_format($coachData['total'], 2) }}</td>
                     </tr>
                     @empty
@@ -178,5 +176,8 @@
     </div>
 </div>
 @endsection
+
+
+
 
 

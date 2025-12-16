@@ -7,10 +7,26 @@ use Illuminate\Http\Request;
 
 class ClientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $clients = Client::with('coaches')->paginate(20);
-        return view('clients.index', compact('clients'));
+        $query = Client::with('coach');
+
+        // Search filters
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+        if ($request->filled('coach_id')) {
+            $query->where('coach_id', $request->coach_id);
+        }
+
+        $clients = $query->orderBy('name')->paginate(20)->withQueryString();
+        
+        $coaches = \App\Models\Coach::orderBy('name')->get();
+        
+        return view('clients.index', compact('clients', 'coaches'));
     }
 
     public function create()
@@ -34,13 +50,13 @@ class ClientController extends Controller
 
     public function show(Client $client)
     {
-        $client->load('coaches', 'charges', 'refunds');
+        $client->load('coach', 'charges', 'refunds');
         return view('clients.show', compact('client'));
     }
 
     public function edit(Client $client)
     {
-        $client->load('coaches');
+        $client->load('coach');
         return view('clients.edit', compact('client'));
     }
 
@@ -62,5 +78,27 @@ class ClientController extends Controller
     {
         $client->delete();
         return redirect()->route('clients.index')->with('success', 'Client deleted successfully.');
+    }
+
+    /**
+     * Update the coach assignment for a client
+     */
+    public function updateCoach(Request $request, Client $client)
+    {
+        $validated = $request->validate([
+            'coach_id' => 'nullable|exists:coaches,id',
+        ]);
+
+        $client->update([
+            'coach_id' => $validated['coach_id'] ?? null,
+        ]);
+
+        $client->load('coach');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Coach assignment updated successfully.',
+            'coach' => $client->coach,
+        ]);
     }
 }

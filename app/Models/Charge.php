@@ -13,6 +13,8 @@ class Charge extends Model
         'date',
         'net',
         'amount_charged',
+        'commission_percentage',
+        'payout',
         'program',
         'stripe_url',
         'stripe_transaction_id',
@@ -25,8 +27,36 @@ class Charge extends Model
         'date' => 'date',
         'net' => 'decimal:2',
         'amount_charged' => 'decimal:2',
+        'commission_percentage' => 'decimal:2',
+        'payout' => 'decimal:2',
         'billing_information_included' => 'boolean',
     ];
+
+    /**
+     * Calculate payout based on net and commission percentage
+     */
+    public function calculatePayout(): ?float
+    {
+        if (!$this->net || !$this->commission_percentage) {
+            return null;
+        }
+        
+        return $this->net * ($this->commission_percentage / 100);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($charge) {
+            // Auto-calculate payout when saving
+            if ($charge->net && $charge->commission_percentage) {
+                $charge->payout = $charge->calculatePayout();
+            } else {
+                $charge->payout = null;
+            }
+        });
+    }
 
     public function client(): BelongsTo
     {
@@ -38,17 +68,4 @@ class Charge extends Model
         return $this->hasMany(Refund::class);
     }
 
-    /**
-     * Calculate commission for a specific coach on this charge
-     */
-    public function getCommissionForCoach(Coach $coach): float
-    {
-        $pivot = $this->client->coaches()->where('coach_id', $coach->id)->first()?->pivot;
-        
-        if (!$pivot || !$pivot->commission_rate) {
-            return 0;
-        }
-
-        return ($this->net * $pivot->commission_rate) / 100;
-    }
 }

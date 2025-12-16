@@ -24,27 +24,17 @@
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-6">
         <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-lg font-medium text-gray-900 mb-4">Assigned Coaches</h2>
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Coach</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Commission Rate</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($client->coaches as $coach)
-                    <tr>
-                        <td class="px-4 py-3 text-sm text-gray-900">{{ $coach->name }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-500">{{ number_format($coach->pivot->commission_rate, 2) }}%</td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="2" class="px-4 py-3 text-center text-sm text-gray-500">No coaches assigned</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Assigned Coach</h2>
+            @if($client->coach)
+                <div class="text-sm">
+                    <p class="text-gray-900 font-medium">{{ $client->coach->name }}</p>
+                    @if($client->coach->email)
+                        <p class="text-gray-500">{{ $client->coach->email }}</p>
+                    @endif
+                </div>
+            @else
+                <p class="text-sm text-gray-500">No coach assigned</p>
+            @endif
         </div>
 
         <div class="bg-white shadow rounded-lg p-6">
@@ -63,5 +53,8 @@
     </div>
 </div>
 @endsection
+
+
+
 
 

@@ -16,18 +16,14 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 mb-6">
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-6">
         <div class="bg-white shadow rounded-lg p-6">
             <h3 class="text-sm font-medium text-gray-500">Commission from Charges</h3>
             <p class="text-2xl font-bold text-gray-900 mt-2">${{ number_format($commissionFromCharges, 2) }}</p>
         </div>
         <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-sm font-medium text-gray-500">One-Off Cash Ins</h3>
-            <p class="text-2xl font-bold text-gray-900 mt-2">${{ number_format($oneOffAmount, 2) }}</p>
-        </div>
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-sm font-medium text-gray-500">Total</h3>
-            <p class="text-2xl font-bold text-indigo-600 mt-2">${{ number_format($commissionFromCharges + $oneOffAmount, 2) }}</p>
+            <h3 class="text-sm font-medium text-gray-500">Total Commission</h3>
+            <p class="text-2xl font-bold text-indigo-600 mt-2">${{ number_format($commissionFromCharges, 2) }}</p>
         </div>
     </div>
 

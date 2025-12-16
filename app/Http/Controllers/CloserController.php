@@ -33,7 +33,7 @@ class CloserController extends Controller
 
     public function show(Closer $closer)
     {
-        $closer->load('clients', 'oneOffCashIns');
+        $closer->load('clients');
         
         // Calculate commission for this closer
         $commissionFromCharges = 0;
@@ -43,9 +43,7 @@ class CloserController extends Controller
             $commissionFromCharges += ($clientCharges * $commissionRate) / 100;
         }
         
-        $oneOffAmount = $closer->oneOffCashIns()->sum('amount');
-        
-        return view('closers.show', compact('closer', 'commissionFromCharges', 'oneOffAmount'));
+        return view('closers.show', compact('closer', 'commissionFromCharges'));
     }
 
     public function edit(Closer $closer)

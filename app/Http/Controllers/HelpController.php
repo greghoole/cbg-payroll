@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class HelpController extends Controller
@@ -11,6 +12,9 @@ class HelpController extends Controller
      */
     public function api()
     {
-        return view('help.api');
+        // Get API token from database or fallback to env
+        $apiToken = Setting::get('api_token') ?? env('API_TOKEN', 'No token configured');
+        
+        return view('help.api', compact('apiToken'));
     }
 }

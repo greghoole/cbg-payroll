@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Setting;
 use App\Models\Charge;
+use App\Models\Client;
 use App\Models\Refund;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -31,7 +32,7 @@ class SettingsController extends Controller
     }
 
     /**
-     * Reset all data by deleting all charges and refunds.
+     * Reset all data by deleting all charges, refunds, and clients.
      */
     public function resetData(Request $request)
     {
@@ -40,7 +41,10 @@ class SettingsController extends Controller
         
         // Delete all charges
         Charge::query()->delete();
+        
+        // Delete all clients (this will also cascade delete pivot table relationships)
+        Client::query()->delete();
 
-        return redirect()->route('settings.index')->with('success', 'All charges and refunds have been deleted successfully.');
+        return redirect()->route('settings.index')->with('success', 'All charges, refunds, and clients have been deleted successfully.');
     }
 }

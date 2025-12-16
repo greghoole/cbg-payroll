@@ -13,7 +13,7 @@
         </p>
         <div class="bg-gray-50 p-4 rounded-md">
             <code class="text-sm">
-                Authorization: Bearer your-api-token-from-env
+                Authorization: Bearer {{ $apiToken }}
             </code>
         </div>
         <p class="text-gray-600 text-sm mt-4">
@@ -33,17 +33,30 @@
         </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Store Charge</h2>
-        <p class="text-gray-700 mb-2">
-            <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded mr-2">POST</span>
-            <code class="text-lg">/api/stripe/charge</code>
-        </p>
-        <p class="text-gray-600 mb-4">
-            Creates or updates a charge record. If the client doesn't exist, it will be created automatically. If a coach is provided, the coach will be assigned to the client.
-        </p>
+    <div class="bg-white shadow rounded-lg p-6 mb-6" x-data="{ open: false }">
+        <button type="button" @click="open = !open" class="flex items-center justify-between w-full text-left">
+            <h2 class="text-xl font-semibold text-gray-900">Store Charge</h2>
+            <svg class="w-6 h-6 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div x-show="open" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="pt-4">
+                <p class="text-gray-700 mb-2">
+                    <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded mr-2">POST</span>
+                    <code class="text-lg">/api/stripe/charge</code>
+                </p>
+                <p class="text-gray-600 mb-4">
+                    Creates or updates a charge record. If the client doesn't exist, it will be created automatically. If a coach is provided, the coach will be assigned to the client.
+                </p>
 
-        <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Request Body</h3>
+                <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Request Body</h3>
         <div class="bg-gray-50 p-4 rounded-md mb-4">
             <pre class="text-sm overflow-x-auto"><code>{
   "date": "2024-01-15",
@@ -117,19 +130,33 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Store Refund</h2>
-        <p class="text-gray-700 mb-2">
-            <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded mr-2">POST</span>
-            <code class="text-lg">/api/stripe/refund</code>
-        </p>
-        <p class="text-gray-600 mb-4">
-            Creates or updates a refund record. If the client doesn't exist, it will be created automatically.
-        </p>
+    <div class="bg-white shadow rounded-lg p-6 mb-6" x-data="{ open: false }">
+        <button type="button" @click="open = !open" class="flex items-center justify-between w-full text-left">
+            <h2 class="text-xl font-semibold text-gray-900">Store Refund</h2>
+            <svg class="w-6 h-6 shrink-0 transition-transform duration-200" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div x-show="open" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="pt-4">
+                <p class="text-gray-700 mb-2">
+                    <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded mr-2">POST</span>
+                    <code class="text-lg">/api/stripe/refund</code>
+                </p>
+                <p class="text-gray-600 mb-4">
+                    Creates or updates a refund record. If the client doesn't exist, it will be created automatically.
+                </p>
 
-        <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Request Body</h3>
+                <h3 class="text-lg font-semibold text-gray-800 mt-6 mb-3">Request Body</h3>
         <div class="bg-gray-50 p-4 rounded-md mb-4">
             <pre class="text-sm overflow-x-auto"><code>{
   "date": "2024-01-20",
@@ -198,6 +225,7 @@
 }</code></pre>
                 </div>
             </div>
+        </div>
         </div>
     </div>
 

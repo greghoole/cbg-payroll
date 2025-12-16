@@ -33,7 +33,7 @@ class AppointmentSetterController extends Controller
 
     public function show(AppointmentSetter $appointmentSetter)
     {
-        $appointmentSetter->load('clients', 'oneOffCashIns');
+        $appointmentSetter->load('clients');
         
         // Calculate commission for this appointment setter
         $commissionFromCharges = 0;
@@ -43,9 +43,7 @@ class AppointmentSetterController extends Controller
             $commissionFromCharges += ($clientCharges * $commissionRate) / 100;
         }
         
-        $oneOffAmount = $appointmentSetter->oneOffCashIns()->sum('amount');
-        
-        return view('appointment-setters.show', compact('appointmentSetter', 'commissionFromCharges', 'oneOffAmount'));
+        return view('appointment-setters.show', compact('appointmentSetter', 'commissionFromCharges'));
     }
 
     public function edit(AppointmentSetter $appointmentSetter)

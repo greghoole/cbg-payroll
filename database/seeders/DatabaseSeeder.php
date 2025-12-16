@@ -34,6 +34,8 @@ class DatabaseSeeder extends Seeder
             CoachSeeder::class,
             AppointmentSetterSeeder::class,
             CloserSeeder::class,
+            ChargeSeeder::class,
+            RefundSeeder::class,
         ]);
     }
 }

@@ -33,19 +33,19 @@ class CoachController extends Controller
 
     public function show(Coach $coach)
     {
-        $coach->load('clients', 'oneOffCashIns');
+        $coach->load('clients.charges');
         
-        // Calculate commission for this coach
+        // Calculate commission for this coach based on charge commission_percentage
         $commissionFromCharges = 0;
         foreach ($coach->clients as $client) {
-            $commissionRate = $client->pivot->commission_rate ?? 0;
-            $clientCharges = $client->charges()->sum('net');
-            $commissionFromCharges += ($clientCharges * $commissionRate) / 100;
+            foreach ($client->charges as $charge) {
+                if ($charge->commission_percentage && $charge->payout) {
+                    $commissionFromCharges += $charge->payout;
+                }
+            }
         }
         
-        $oneOffAmount = $coach->oneOffCashIns()->sum('amount');
-        
-        return view('coaches.show', compact('coach', 'commissionFromCharges', 'oneOffAmount'));
+        return view('coaches.show', compact('coach', 'commissionFromCharges'));
     }
 
     public function edit(Coach $coach)
@@ -69,15 +69,17 @@ class CoachController extends Controller
             'email' => $validated['email'] ?? null,
         ]);
 
-        // Update client relationships with commission rates
+        // Update client relationships (1:1 relationship)
         if ($request->has('clients')) {
-            $syncData = [];
+            // First, remove this coach from all clients
+            Client::where('coach_id', $coach->id)->update(['coach_id' => null]);
+            
+            // Then assign this coach to selected clients
             foreach ($request->input('clients', []) as $clientId => $data) {
-                if (isset($data['assigned']) && isset($data['commission_rate'])) {
-                    $syncData[$clientId] = ['commission_rate' => $data['commission_rate'] ?? 0];
+                if (isset($data['assigned']) && $data['assigned']) {
+                    Client::where('id', $clientId)->update(['coach_id' => $coach->id]);
                 }
             }
-            $coach->clients()->sync($syncData);
         }
 
         return redirect()->route('coaches.show', $coach)->with('success', 'Coach updated successfully.');

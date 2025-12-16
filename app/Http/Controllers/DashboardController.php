@@ -6,7 +6,6 @@ use App\Models\Charge;
 use App\Models\Refund;
 use App\Models\Client;
 use App\Models\Coach;
-use App\Models\OneOffCashIn;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -21,22 +20,21 @@ class DashboardController extends Controller
         $recentCharges = Charge::with('client')->latest('date')->take(10)->get();
         $recentRefunds = Refund::with('client')->latest('date')->take(10)->get();
 
-        // Calculate coach commissions
-        $coaches = Coach::with('clients')->get()->map(function ($coach) {
+        // Calculate coach commissions based on charge payouts
+        $coaches = Coach::with('clients.charges')->get()->map(function ($coach) {
             $commissionFromCharges = 0;
             foreach ($coach->clients as $client) {
-                $commissionRate = $client->pivot->commission_rate ?? 0;
-                $clientCharges = $client->charges()->sum('net');
-                $commissionFromCharges += ($clientCharges * $commissionRate) / 100;
+                foreach ($client->charges as $charge) {
+                    if ($charge->payout) {
+                        $commissionFromCharges += $charge->payout;
+                    }
+                }
             }
-            
-            $oneOffAmount = $coach->oneOffCashIns()->sum('amount');
             
             return [
                 'coach' => $coach,
                 'commission' => $commissionFromCharges,
-                'one_off' => $oneOffAmount,
-                'total' => $commissionFromCharges + $oneOffAmount,
+                'total' => $commissionFromCharges,
             ];
         })->sortByDesc('total')->take(10);
 
