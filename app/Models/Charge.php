@@ -10,6 +10,7 @@ class Charge extends Model
 {
     protected $fillable = [
         'client_id',
+        'coach_id',
         'date',
         'net',
         'amount_charged',
@@ -66,6 +67,11 @@ class Charge extends Model
     public function refunds(): HasMany
     {
         return $this->hasMany(Refund::class);
+    }
+
+    public function coach(): BelongsTo
+    {
+        return $this->belongsTo(Coach::class);
     }
 
 }

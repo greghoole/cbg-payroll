@@ -23,8 +23,8 @@
                 selectedClientName: @js((old('client_id', $charge->client_id) ? ($clients->firstWhere('id', old('client_id', $charge->client_id))?->name ?? 'Select a client') : 'Select a client')),
                 clients: @js($clients->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'email' => $c->email]))
             }" class="relative">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Client *</label>
-                <input type="hidden" name="client_id" :value="selectedClient" required>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Client</label>
+                <input type="hidden" name="client_id" :value="selectedClient">
                 <button type="button" @click="open = !open" @click.away="open = false" class="mt-1 w-full px-4 py-2.5 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 flex items-center justify-between">
                     <span x-text="selectedClientName" :class="selectedClient ? 'text-gray-900' : 'text-gray-500'"></span>
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,6 +36,12 @@
                         <input type="text" x-model="search" @click.stop placeholder="Search clients..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     </div>
                     <ul class="py-1">
+                        <li>
+                            <button type="button" @click="selectedClient = null; selectedClientName = 'No Client'; open = false" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none" :class="!selectedClient ? 'bg-indigo-100' : ''">
+                                <div class="font-medium text-gray-900">No Client</div>
+                                <div class="text-xs text-gray-500">For bonuses or other non-client charges</div>
+                            </button>
+                        </li>
                         <template x-for="client in clients.filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase()))" :key="client.id">
                             <li>
                                 <button type="button" @click="selectedClient = client.id; selectedClientName = client.name; open = false" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none" :class="selectedClient == client.id ? 'bg-indigo-100' : ''">

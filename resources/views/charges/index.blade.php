@@ -136,9 +136,13 @@
                     <tr>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $charge->date->format('M d, Y') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            <a href="{{ route('clients.show', $charge->client) }}" class="text-indigo-600 hover:text-indigo-900">
-                                {{ $charge->client->name }}
-                            </a>
+                            @if($charge->client)
+                                <a href="{{ route('clients.show', $charge->client) }}" class="text-indigo-600 hover:text-indigo-900">
+                                    {{ $charge->client->name }}
+                                </a>
+                            @else
+                                <span class="text-gray-400 italic">No Client</span>
+                            @endif
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-500" style="max-width: 200px;">
                             <div class="truncate" title="{{ $charge->program ?? '—' }}">{{ $charge->program ?? '—' }}</div>
@@ -146,20 +150,36 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${{ number_format($charge->amount_charged, 2) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">${{ number_format($charge->net, 2) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <select 
-                                class="coach-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 px-3 py-1.5 min-w-[150px]" 
-                                data-client-id="{{ $charge->client->id }}"
-                                data-charge-id="{{ $charge->id }}"
-                                onchange="updateCoach(this, {{ $charge->client->id }})">
-                                <option value="">— No Coach —</option>
-                                @foreach($coaches as $coach)
-                                    <option value="{{ $coach->id }}" 
-                                        {{ $charge->client->coach_id == $coach->id ? 'selected' : '' }}>
-                                        {{ $coach->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <span class="coach-update-status ml-2 text-xs" id="status-{{ $charge->client->id }}" style="display: none;"></span>
+                            @if($charge->client)
+                                <select 
+                                    class="coach-select bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 px-3 py-1.5 min-w-[150px]" 
+                                    data-client-id="{{ $charge->client->id }}"
+                                    data-charge-id="{{ $charge->id }}"
+                                    onchange="updateCoach(this, {{ $charge->client->id }}, {{ $charge->id }})">
+                                    <option value="">— No Coach —</option>
+                                    @foreach($coaches as $coach)
+                                        <option value="{{ $coach->id }}" 
+                                            {{ $charge->client->coach_id == $coach->id ? 'selected' : '' }}>
+                                            {{ $coach->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <span class="coach-update-status ml-2 text-xs" id="status-{{ $charge->client->id }}" style="display: none;"></span>
+                            @else
+                                <select 
+                                    class="coach-select-charge bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 px-3 py-1.5 min-w-[150px]" 
+                                    data-charge-id="{{ $charge->id }}"
+                                    onchange="updateChargeCoach(this, {{ $charge->id }})">
+                                    <option value="">— No Coach —</option>
+                                    @foreach($coaches as $coach)
+                                        <option value="{{ $coach->id }}" 
+                                            {{ $charge->coach_id == $coach->id ? 'selected' : '' }}>
+                                            {{ $coach->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <span class="coach-update-status ml-2 text-xs" id="charge-status-{{ $charge->id }}" style="display: none;"></span>
+                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                             <div class="flex items-center justify-end gap-1">
@@ -221,14 +241,14 @@
 <script>
 // Store original values when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.coach-select').forEach(select => {
+    document.querySelectorAll('.coach-select, .coach-select-charge').forEach(select => {
         if (!select.dataset.originalValue) {
             select.dataset.originalValue = select.value;
         }
     });
 });
 
-function updateCoach(selectElement, clientId) {
+function updateCoach(selectElement, clientId, chargeId) {
     const coachId = selectElement.value;
     const statusElement = document.getElementById('status-' + clientId);
     const originalValue = selectElement.dataset.originalValue || '';
@@ -273,6 +293,83 @@ function updateCoach(selectElement, clientId) {
             
             // Update all other dropdowns for the same client
             document.querySelectorAll(`.coach-select[data-client-id="${clientId}"]`).forEach(otherSelect => {
+                if (otherSelect !== selectElement) {
+                    otherSelect.value = coachId;
+                    otherSelect.dataset.originalValue = coachId;
+                }
+            });
+            
+            // Hide status after 2 seconds
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 2000);
+        } else {
+            throw new Error(data.message || 'Update failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        statusElement.textContent = '✗ Error';
+        statusElement.className = 'coach-update-status ml-2 text-xs text-red-600';
+        
+        // Revert to original value
+        selectElement.value = originalValue;
+        
+        // Hide status after 3 seconds
+        setTimeout(() => {
+            statusElement.style.display = 'none';
+        }, 3000);
+    })
+    .finally(() => {
+        selectElement.disabled = false;
+    });
+}
+
+function updateChargeCoach(selectElement, chargeId) {
+    const coachId = selectElement.value;
+    const statusElement = document.getElementById('charge-status-' + chargeId);
+    const originalValue = selectElement.dataset.originalValue || '';
+    
+    // Show loading state
+    selectElement.disabled = true;
+    statusElement.style.display = 'inline';
+    statusElement.textContent = 'Updating...';
+    statusElement.className = 'coach-update-status ml-2 text-xs text-blue-600';
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                      document.querySelector('input[name="_token"]')?.value;
+    
+    // Make AJAX request
+    fetch(`/charges/${chargeId}/update-coach`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            coach_id: coachId || null
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || 'Update failed');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            statusElement.textContent = '✓ Updated';
+            statusElement.className = 'coach-update-status ml-2 text-xs text-green-600';
+            
+            // Update the original value to the new value
+            selectElement.dataset.originalValue = coachId;
+            
+            // Update all other dropdowns for the same charge
+            document.querySelectorAll(`.coach-select-charge[data-charge-id="${chargeId}"]`).forEach(otherSelect => {
                 if (otherSelect !== selectElement) {
                     otherSelect.value = coachId;
                     otherSelect.dataset.originalValue = coachId;

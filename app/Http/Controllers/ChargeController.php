@@ -10,7 +10,7 @@ class ChargeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Charge::with('client.coach');
+        $query = Charge::with(['client.coach', 'coach']);
 
         // Search filters
         if ($request->filled('date_from')) {
@@ -48,7 +48,7 @@ class ChargeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
+            'client_id' => 'nullable|exists:clients,id',
             'date' => 'required|date',
             'net' => 'required|numeric|min:0',
             'amount_charged' => 'required|numeric|min:0',
@@ -62,6 +62,14 @@ class ChargeController extends Controller
         ]);
 
         $validated['billing_information_included'] = $request->has('billing_information_included');
+        
+        // Convert empty strings to null for nullable fields
+        if (empty($validated['stripe_transaction_id'])) {
+            $validated['stripe_transaction_id'] = null;
+        }
+        if (empty($validated['stripe_charge_id'])) {
+            $validated['stripe_charge_id'] = null;
+        }
 
         Charge::create($validated);
 
@@ -77,7 +85,7 @@ class ChargeController extends Controller
     public function update(Request $request, Charge $charge)
     {
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,id',
+            'client_id' => 'nullable|exists:clients,id',
             'date' => 'required|date',
             'net' => 'required|numeric|min:0',
             'amount_charged' => 'required|numeric|min:0',
@@ -91,6 +99,14 @@ class ChargeController extends Controller
         ]);
 
         $validated['billing_information_included'] = $request->has('billing_information_included');
+        
+        // Convert empty strings to null for nullable fields
+        if (empty($validated['stripe_transaction_id'])) {
+            $validated['stripe_transaction_id'] = null;
+        }
+        if (empty($validated['stripe_charge_id'])) {
+            $validated['stripe_charge_id'] = null;
+        }
 
         $charge->update($validated);
 
@@ -124,6 +140,26 @@ class ChargeController extends Controller
             'message' => 'Commission percentage updated successfully.',
             'commission_percentage' => $charge->commission_percentage,
             'payout' => $charge->payout,
+        ]);
+    }
+
+    /**
+     * Update the coach for a charge (for charges without clients)
+     */
+    public function updateCoach(Request $request, Charge $charge)
+    {
+        $validated = $request->validate([
+            'coach_id' => 'nullable|exists:coaches,id',
+        ]);
+
+        $charge->update([
+            'coach_id' => $validated['coach_id'] ?: null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Coach updated successfully.',
+            'coach_id' => $charge->coach_id,
         ]);
     }
 }

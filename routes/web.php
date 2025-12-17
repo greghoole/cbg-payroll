@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/clients/{client}/update-coach', [\App\Http\Controllers\ClientController::class, 'updateCoach'])->name('clients.update-coach');
     Route::resource('charges', \App\Http\Controllers\ChargeController::class)->except(['show']);
     Route::post('/charges/{charge}/update-commission', [\App\Http\Controllers\ChargeController::class, 'updateCommission'])->name('charges.update-commission');
+    Route::post('/charges/{charge}/update-coach', [\App\Http\Controllers\ChargeController::class, 'updateCoach'])->name('charges.update-coach');
     Route::resource('refunds', \App\Http\Controllers\RefundController::class)->except(['show']);
     Route::get('/payroll', [\App\Http\Controllers\PayrollController::class, 'index'])->name('payroll.index');
     

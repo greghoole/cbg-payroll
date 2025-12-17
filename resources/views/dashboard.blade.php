@@ -100,7 +100,7 @@
                         @forelse($recentCharges as $charge)
                         <tr>
                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{{ $charge->date->format('M d, Y') }}</td>
-                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ $charge->client->name }}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{{ $charge->client ? $charge->client->name : 'No Client' }}</td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${{ number_format($charge->net, 2) }}</td>
                         </tr>
                         @empty

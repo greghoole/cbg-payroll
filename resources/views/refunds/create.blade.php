@@ -58,7 +58,7 @@
                     <option value="">None</option>
                     @foreach($charges as $charge)
                         <option value="{{ $charge->id }}" {{ old('charge_id') == $charge->id ? 'selected' : '' }}>
-                            {{ $charge->client->name }} - ${{ number_format($charge->net, 2) }} ({{ $charge->date->format('M d, Y') }})
+                            {{ $charge->client ? $charge->client->name : 'No Client' }} - ${{ number_format($charge->net, 2) }} ({{ $charge->date->format('M d, Y') }})
                         </option>
                     @endforeach
                 </select>
