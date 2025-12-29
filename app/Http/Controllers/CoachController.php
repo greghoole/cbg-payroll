@@ -70,6 +70,7 @@ class CoachController extends Controller
                         'amount' => $charge->amount_charged ?? $charge->net,
                         'commission_percentage' => $charge->commission_percentage,
                         'payout' => $charge->payout,
+                        'program' => $charge->program,
                     ];
                 }
             }
@@ -109,6 +110,7 @@ class CoachController extends Controller
                     'amount' => $charge->amount_charged ?? $charge->net,
                     'commission_percentage' => $charge->commission_percentage,
                     'payout' => $charge->payout,
+                    'program' => $charge->program,
                 ];
             }
         }

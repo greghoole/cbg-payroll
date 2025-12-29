@@ -58,6 +58,7 @@ class PayrollController extends Controller
                         'amount' => $charge->amount_charged ?? $charge->net,
                         'commission_percentage' => $charge->commission_percentage,
                         'payout' => $charge->payout,
+                        'program' => $charge->program,
                     ];
                 })->sortByDesc(function($charge) {
                     return strtotime($charge['date']);

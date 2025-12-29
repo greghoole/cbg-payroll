@@ -3,7 +3,7 @@
 @section('title', $coach->name)
 
 @section('content')
-<div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+<div class="w-full py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
         <a href="{{ route('coaches.index') }}" class="text-indigo-600 hover:text-indigo-900">← Back to Coaches</a>
     </div>
@@ -65,7 +65,7 @@
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client Name</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email Address</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
                                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Commission %</th>
                                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Payout Amount</th>
@@ -76,7 +76,7 @@
                                         <tr>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['date'] }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['client_name'] }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['client_email'] }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['program'] ?? '—' }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">${{ number_format($charge['amount'], 2) }}</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ number_format($charge['commission_percentage'], 2) }}%</td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">${{ number_format($charge['payout'], 2) }}</td>
