@@ -24,53 +24,74 @@
         </div>
     </div>
 
-    <div class="bg-white shadow rounded-lg p-6 mb-6" x-data="{ open: true }">
-        <button 
-            @click="open = !open" 
-            class="flex items-center justify-between w-full text-left focus:outline-none"
-        >
-            <h2 class="text-lg font-medium text-gray-900">Commissions by Month</h2>
-            <svg 
-                class="w-5 h-5 text-gray-500 transition-transform duration-200" 
-                :class="{ 'rotate-180': open }"
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-            >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-        </button>
-        <div 
-            x-show="open" 
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 transform -translate-y-2"
-            x-transition:enter-end="opacity-100 transform translate-y-0"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 transform translate-y-0"
-            x-transition:leave-end="opacity-0 transform -translate-y-2"
-            class="mt-4"
-        >
-            @if(count($commissionsByMonth) > 0)
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Commission</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($commissionsByMonth as $monthData)
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $monthData['month'] }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">${{ number_format($monthData['total'], 2) }}</td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            @else
-                <p class="text-sm text-gray-500">No commissions recorded yet.</p>
-            @endif
-        </div>
+    <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Commissions by Month</h2>
+        
+        @if(count($commissionsByMonth) > 0)
+            <div class="space-y-2">
+                @foreach($commissionsByMonth as $monthKey => $monthData)
+                    <div class="border border-gray-200 rounded-lg" x-data="{ open: false }">
+                        <button 
+                            @click="open = !open" 
+                            class="flex items-center justify-between w-full text-left focus:outline-none px-4 py-3 hover:bg-gray-50 rounded-t-lg"
+                        >
+                            <div class="flex items-center justify-between w-full pr-4">
+                                <span class="text-sm font-medium text-gray-900">{{ $monthData['month'] }}</span>
+                                <span class="text-sm font-medium text-gray-900">${{ number_format($monthData['total'], 2) }}</span>
+                            </div>
+                            <svg 
+                                class="w-5 h-5 text-gray-500 transition-transform duration-200 flex-shrink-0" 
+                                :class="{ 'rotate-180': open }"
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div 
+                            x-show="open" 
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 transform -translate-y-2"
+                            x-transition:enter-end="opacity-100 transform translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 transform translate-y-0"
+                            x-transition:leave-end="opacity-0 transform -translate-y-2"
+                            class="border-t border-gray-200"
+                        >
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email Address</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Commission %</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Payout Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach($monthData['charges'] as $charge)
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['date'] }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['client_name'] }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['client_email'] }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">${{ number_format($charge['amount'], 2) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ number_format($charge['commission_percentage'], 2) }}%</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">${{ number_format($charge['payout'], 2) }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <p class="text-sm text-gray-500">No commissions recorded yet.</p>
+        @endif
     </div>
 
     <div class="bg-white shadow rounded-lg p-6" x-data="{ 

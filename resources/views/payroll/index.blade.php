@@ -62,45 +62,88 @@
             </p>
         </div>
     @else
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coach</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount Owed</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($coachesWithPayouts as $coachData)
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                <a href="{{ route('coaches.show', $coachData['coach']) }}" class="text-indigo-600 hover:text-indigo-900">
-                                    {{ $coachData['coach']->name }}
-                                </a>
-                                @if($coachData['coach']->email)
-                                    <div class="text-xs text-gray-500">{{ $coachData['coach']->email }}</div>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">${{ number_format($coachData['total_payout'], 2) }}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="2" class="px-6 py-4 text-center text-sm text-gray-500">No payroll data found for the selected date range</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                    @if($coachesWithPayouts->count() > 0)
-                    <tfoot class="bg-gray-50">
-                        <tr>
-                            <td class="px-6 py-4 text-sm font-bold text-gray-900">Total</td>
-                            <td class="px-6 py-4 text-sm font-bold text-gray-900 text-right">${{ number_format($coachesWithPayouts->sum('total_payout'), 2) }}</td>
-                        </tr>
-                    </tfoot>
-                    @endif
-                </table>
+        @if($coachesWithPayouts->count() > 0)
+            <div class="space-y-4 mb-6">
+                @foreach($coachesWithPayouts as $coachData)
+                    <div class="bg-white shadow rounded-lg border border-gray-200" x-data="{ open: false }">
+                        <button 
+                            @click="open = !open" 
+                            class="flex items-center justify-between w-full text-left focus:outline-none px-6 py-4 hover:bg-gray-50 rounded-t-lg"
+                        >
+                            <div class="flex items-center justify-between w-full pr-4">
+                                <div>
+                                    <a href="{{ route('coaches.show', $coachData['coach']) }}" class="text-sm font-medium text-indigo-600 hover:text-indigo-900" onclick="event.stopPropagation();">
+                                        {{ $coachData['coach']->name }}
+                                    </a>
+                                    @if($coachData['coach']->email)
+                                        <div class="text-xs text-gray-500">{{ $coachData['coach']->email }}</div>
+                                    @endif
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">${{ number_format($coachData['total_payout'], 2) }}</span>
+                            </div>
+                            <svg 
+                                class="w-5 h-5 text-gray-500 transition-transform duration-200 flex-shrink-0" 
+                                :class="{ 'rotate-180': open }"
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div 
+                            x-show="open" 
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 transform -translate-y-2"
+                            x-transition:enter-end="opacity-100 transform translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100 transform translate-y-0"
+                            x-transition:leave-end="opacity-0 transform -translate-y-2"
+                            class="border-t border-gray-200"
+                        >
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email Address</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Commission %</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Payout Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach($coachData['charges'] as $charge)
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['date'] }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['client_name'] }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $charge['client_email'] }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">${{ number_format($charge['amount'], 2) }}</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{{ number_format($charge['commission_percentage'], 2) }}%</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 text-right">${{ number_format($charge['payout'], 2) }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
             </div>
-        </div>
+
+            <!-- Total Summary -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-bold text-gray-900">Total</span>
+                    <span class="text-sm font-bold text-gray-900">${{ number_format($coachesWithPayouts->sum('total_payout'), 2) }}</span>
+                </div>
+            </div>
+        @else
+            <div class="bg-white shadow rounded-lg p-6">
+                <p class="text-sm text-gray-500 text-center">No payroll data found for the selected date range</p>
+            </div>
+        @endif
     @endif
 </div>
 @endsection

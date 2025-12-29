@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Coach;
 use App\Models\Charge;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PayrollController extends Controller
 {
@@ -15,31 +14,59 @@ class PayrollController extends Controller
 
         // Only show results if both date_from and date_to are provided
         if ($request->filled('date_from') && $request->filled('date_to')) {
-            // Build query for charges with date filters
-            $chargesQuery = Charge::query()
-                ->join('clients', 'charges.client_id', '=', 'clients.id')
-                ->whereNotNull('charges.payout')
-                ->where('charges.payout', '>', 0)
-                ->where('charges.date', '>=', $request->date_from)
-                ->where('charges.date', '<=', $request->date_to);
+            // Get charges within date range that have a coach (either through client or direct coach_id)
+            $charges = Charge::query()
+                ->with(['client'])
+                ->whereNotNull('payout')
+                ->where('payout', '>', 0)
+                ->where('date', '>=', $request->date_from)
+                ->where('date', '<=', $request->date_to)
+                ->where(function($query) {
+                    // Charges with client that has a coach_id
+                    $query->whereHas('client', function($q) {
+                        $q->whereNotNull('coach_id');
+                    })
+                    // OR charges with direct coach_id
+                    ->orWhereNotNull('coach_id');
+                })
+                ->get();
 
-            // Group by coach and sum payouts
-            $payoutsByCoach = $chargesQuery
-                ->select('clients.coach_id', DB::raw('SUM(charges.payout) as total_payout'))
-                ->groupBy('clients.coach_id')
-                ->get()
-                ->keyBy('coach_id');
+            // Group charges by coach (either client->coach_id or direct coach_id)
+            $chargesByCoach = $charges->groupBy(function($charge) {
+                // Use direct coach_id if available, otherwise use client's coach_id
+                return $charge->coach_id ?? ($charge->client ? $charge->client->coach_id : null);
+            })->filter(function($group, $coachId) {
+                return $coachId !== null;
+            });
 
-            // Get all coaches with payouts
-            $coachIds = $payoutsByCoach->keys()->filter();
+            // Get all coaches with charges
+            $coachIds = $chargesByCoach->keys()->filter();
             $coaches = Coach::whereIn('id', $coachIds)->get();
 
-            // Map coaches with their payouts
-            $coachesWithPayouts = $coaches->map(function ($coach) use ($payoutsByCoach) {
-                $payoutData = $payoutsByCoach->get($coach->id);
+            // Map coaches with their payouts and charges
+            $coachesWithPayouts = $coaches->map(function ($coach) use ($chargesByCoach) {
+                $coachCharges = $chargesByCoach->get($coach->id, collect());
+                
+                $totalPayout = $coachCharges->sum('payout');
+                
+                // Prepare charge details
+                $chargeDetails = $coachCharges->map(function($charge) {
+                    return [
+                        'date' => $charge->date->format('M d, Y'),
+                        'client_name' => $charge->client ? $charge->client->name : 'No Client',
+                        'client_email' => $charge->client ? $charge->client->email : '—',
+                        'amount' => $charge->amount_charged ?? $charge->net,
+                        'commission_percentage' => $charge->commission_percentage,
+                        'payout' => $charge->payout,
+                    ];
+                })->sortByDesc(function($charge) {
+                    return strtotime($charge['date']);
+                })->values()->toArray();
+
                 return [
                     'coach' => $coach,
-                    'total_payout' => $payoutData ? (float) $payoutData->total_payout : 0,
+                    'total_payout' => $totalPayout,
+                    'charges' => $chargeDetails,
                 ];
             })->filter(function ($item) {
                 return $item['total_payout'] > 0;

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Charge;
 use App\Models\Client;
+use App\Models\Coach;
 use Illuminate\Http\Request;
 
 class ChargeController extends Controller
@@ -26,8 +27,10 @@ class ChargeController extends Controller
             $query->where('program', 'like', '%' . $request->program . '%');
         }
         if ($request->filled('coach_id')) {
-            $query->whereHas('client', function ($q) use ($request) {
-                $q->where('coach_id', $request->coach_id);
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('client', function ($subQ) use ($request) {
+                    $subQ->where('coach_id', $request->coach_id);
+                })->orWhere('coach_id', $request->coach_id);
             });
         }
 
@@ -41,14 +44,16 @@ class ChargeController extends Controller
 
     public function create()
     {
-        $clients = Client::orderBy('name')->get();
-        return view('charges.create', compact('clients'));
+        $clients = Client::with('coach')->orderBy('name')->get();
+        $coaches = Coach::orderBy('name')->get();
+        return view('charges.create', compact('clients', 'coaches'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'client_id' => 'nullable|exists:clients,id',
+            'coach_id' => 'nullable|exists:coaches,id',
             'date' => 'required|date',
             'net' => 'required|numeric|min:0',
             'amount_charged' => 'required|numeric|min:0',
@@ -61,6 +66,11 @@ class ChargeController extends Controller
             'country' => 'nullable|string|max:255',
         ]);
 
+        // Require coach_id if client_id is not set
+        if (empty($validated['client_id']) && empty($validated['coach_id'])) {
+            return back()->withErrors(['coach_id' => 'A coach must be selected when no client is selected.'])->withInput();
+        }
+
         $validated['billing_information_included'] = $request->has('billing_information_included');
         
         // Convert empty strings to null for nullable fields
@@ -70,6 +80,9 @@ class ChargeController extends Controller
         if (empty($validated['stripe_charge_id'])) {
             $validated['stripe_charge_id'] = null;
         }
+        if (empty($validated['coach_id'])) {
+            $validated['coach_id'] = null;
+        }
 
         Charge::create($validated);
 
@@ -78,14 +91,17 @@ class ChargeController extends Controller
 
     public function edit(Charge $charge)
     {
-        $clients = Client::orderBy('name')->get();
-        return view('charges.edit', compact('charge', 'clients'));
+        $charge->load('client.coach');
+        $clients = Client::with('coach')->orderBy('name')->get();
+        $coaches = Coach::orderBy('name')->get();
+        return view('charges.edit', compact('charge', 'clients', 'coaches'));
     }
 
     public function update(Request $request, Charge $charge)
     {
         $validated = $request->validate([
             'client_id' => 'nullable|exists:clients,id',
+            'coach_id' => 'nullable|exists:coaches,id',
             'date' => 'required|date',
             'net' => 'required|numeric|min:0',
             'amount_charged' => 'required|numeric|min:0',
@@ -98,6 +114,11 @@ class ChargeController extends Controller
             'country' => 'nullable|string|max:255',
         ]);
 
+        // Require coach_id if client_id is not set
+        if (empty($validated['client_id']) && empty($validated['coach_id'])) {
+            return back()->withErrors(['coach_id' => 'A coach must be selected when no client is selected.'])->withInput();
+        }
+
         $validated['billing_information_included'] = $request->has('billing_information_included');
         
         // Convert empty strings to null for nullable fields
@@ -106,6 +127,9 @@ class ChargeController extends Controller
         }
         if (empty($validated['stripe_charge_id'])) {
             $validated['stripe_charge_id'] = null;
+        }
+        if (empty($validated['coach_id'])) {
+            $validated['coach_id'] = null;
         }
 
         $charge->update($validated);

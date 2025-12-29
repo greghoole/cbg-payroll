@@ -3,6 +3,37 @@
 @section('title', 'Edit Charge')
 
 @section('content')
+@php
+    $clientsData = $clients->map(function($c) {
+        return [
+            'id' => (int)$c->id,
+            'name' => $c->name ?? '',
+            'email' => $c->email ?? '',
+            'coach_id' => $c->coach?->id ? (int)$c->coach->id : null
+        ];
+    })->values()->toArray();
+    
+    $coachesData = $coaches->map(function($c) {
+        return [
+            'id' => (int)$c->id,
+            'name' => $c->name ?? '',
+            'email' => $c->email ?? ''
+        ];
+    })->values()->toArray();
+    
+    $initialClientId = old('client_id', $charge->client_id ? (int)$charge->client_id : null);
+    // Initialize coach from charge's coach_id, or from client's coach_id if charge doesn't have one
+    $initialCoachId = old('coach_id');
+    if ($initialCoachId === null) {
+        if ($charge->coach_id) {
+            $initialCoachId = (int)$charge->coach_id;
+        } elseif ($charge->client_id && $charge->client && $charge->client->coach_id) {
+            $initialCoachId = (int)$charge->client->coach_id;
+        } else {
+            $initialCoachId = null;
+        }
+    }
+@endphp
 <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
         <a href="{{ route('charges.index') }}" class="text-indigo-600 hover:text-indigo-900">← Back to Charges</a>
@@ -10,50 +41,125 @@
 
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Edit Charge</h1>
 
-    <form action="{{ route('charges.update', $charge) }}" method="POST" class="bg-white shadow rounded-lg p-6">
+    <form action="{{ route('charges.update', $charge) }}" method="POST" class="bg-white shadow rounded-lg p-6" x-data="{
+        selectedClient: {{ json_encode($initialClientId) }},
+        selectedCoach: {{ json_encode($initialCoachId) }},
+        clients: {{ json_encode($clientsData) }},
+        coaches: {{ json_encode($coachesData) }},
+        clientDropdownOpen: false,
+        coachDropdownOpen: false,
+        clientSearch: '',
+        coachSearch: '',
+        get selectedClientName() {
+            if (!this.selectedClient || !Array.isArray(this.clients)) return 'Select a client';
+            const client = this.clients.find(c => c.id === this.selectedClient);
+            return client ? client.name : 'Select a client';
+        },
+        get selectedCoachName() {
+            if (!this.selectedCoach || !Array.isArray(this.coaches)) return 'Select a coach';
+            // Ensure we're comparing numbers
+            const coachId = typeof this.selectedCoach === 'string' ? parseInt(this.selectedCoach, 10) : this.selectedCoach;
+            const coach = this.coaches.find(c => c.id === coachId);
+            return coach ? coach.name : 'Select a coach';
+        },
+        get selectedClientCoachId() {
+            if (!this.selectedClient || !Array.isArray(this.clients)) return null;
+            const client = this.clients.find(c => c.id === this.selectedClient);
+            return client ? client.coach_id : null;
+        }
+    }" x-init="
+        if (!Array.isArray(clients)) clients = [];
+        if (!Array.isArray(coaches)) coaches = [];
+        // Ensure selectedCoach is properly initialized - convert to number if it's a string
+        if (selectedCoach && typeof selectedCoach === 'string') {
+            selectedCoach = parseInt(selectedCoach, 10);
+        }
+        $watch('selectedClient', value => {
+            // Only auto-populate if coach is not already set (to preserve direct coach_id assignments)
+            if (value && !selectedCoach && Array.isArray(clients)) {
+                const client = clients.find(c => c.id === value);
+                if (client && client.coach_id) {
+                    selectedCoach = client.coach_id;
+                }
+            }
+        })
+    ">
         @csrf
         @method('PUT')
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Client -->
-            <div x-data="{ 
-                open: false, 
-                search: '', 
-                selectedClient: {{ old('client_id', $charge->client_id) ?: 'null' }},
-                selectedClientName: @js((old('client_id', $charge->client_id) ? ($clients->firstWhere('id', old('client_id', $charge->client_id))?->name ?? 'Select a client') : 'Select a client')),
-                clients: @js($clients->map(fn($c) => ['id' => $c->id, 'name' => $c->name, 'email' => $c->email]))
-            }" class="relative">
+            <div class="relative">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Client</label>
-                <input type="hidden" name="client_id" :value="selectedClient">
-                <button type="button" @click="open = !open" @click.away="open = false" class="mt-1 w-full px-4 py-2.5 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 flex items-center justify-between">
+                <input type="hidden" name="client_id" x-model="selectedClient">
+                <button type="button" @click="clientDropdownOpen = !clientDropdownOpen" @click.away="clientDropdownOpen = false" class="mt-1 w-full px-4 py-2.5 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 flex items-center justify-between">
                     <span x-text="selectedClientName" :class="selectedClient ? 'text-gray-900' : 'text-gray-500'"></span>
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                 </button>
-                <div x-show="open" x-transition @click.stop class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                <div x-show="clientDropdownOpen" x-transition @click.stop class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                     <div class="p-2 sticky top-0 bg-white border-b" @click.stop>
-                        <input type="text" x-model="search" @click.stop placeholder="Search clients..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                        <input type="text" x-model="clientSearch" @click.stop placeholder="Search clients..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     </div>
                     <ul class="py-1">
                         <li>
-                            <button type="button" @click="selectedClient = null; selectedClientName = 'No Client'; open = false" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none" :class="!selectedClient ? 'bg-indigo-100' : ''">
+                            <button type="button" @click="selectedClient = null; clientDropdownOpen = false" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none" :class="!selectedClient ? 'bg-indigo-100' : ''">
                                 <div class="font-medium text-gray-900">No Client</div>
                                 <div class="text-xs text-gray-500">For bonuses or other non-client charges</div>
                             </button>
                         </li>
-                        <template x-for="client in clients.filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase()))" :key="client.id">
+                        <template x-for="client in clients.filter(c => !clientSearch || c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.email.toLowerCase().includes(clientSearch.toLowerCase()))" :key="client.id">
                             <li>
-                                <button type="button" @click="selectedClient = client.id; selectedClientName = client.name; open = false" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none" :class="selectedClient == client.id ? 'bg-indigo-100' : ''">
+                                <button type="button" @click="selectedClient = client.id; clientDropdownOpen = false" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none" :class="selectedClient === client.id ? 'bg-indigo-100' : ''">
                                     <div class="font-medium text-gray-900" x-text="client.name"></div>
                                     <div class="text-xs text-gray-500" x-text="client.email"></div>
                                 </button>
                             </li>
                         </template>
-                        <li x-show="clients.filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.email.toLowerCase().includes(search.toLowerCase())).length === 0" class="px-4 py-2 text-sm text-gray-500">No clients found</li>
+                        <li x-show="clients.filter(c => !clientSearch || c.name.toLowerCase().includes(clientSearch.toLowerCase()) || c.email.toLowerCase().includes(clientSearch.toLowerCase())).length === 0" class="px-4 py-2 text-sm text-gray-500">No clients found</li>
                     </ul>
                 </div>
                 @error('client_id')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Coach -->
+            <div class="relative">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Coach
+                    <span x-show="!selectedClient" class="text-red-500">*</span>
+                </label>
+                <input type="hidden" name="coach_id" x-model="selectedCoach">
+                <button type="button" @click="coachDropdownOpen = !coachDropdownOpen" @click.away="coachDropdownOpen = false" class="mt-1 w-full px-4 py-2.5 text-left bg-white border rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-gray-900 flex items-center justify-between" :class="(!selectedClient && !selectedCoach) ? 'border-red-300' : 'border-gray-300'">
+                    <span x-text="selectedCoachName" :class="selectedCoach ? 'text-gray-900' : 'text-gray-500'"></span>
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div x-show="coachDropdownOpen" x-transition @click.stop class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div class="p-2 sticky top-0 bg-white border-b" @click.stop>
+                        <input type="text" x-model="coachSearch" @click.stop placeholder="Search coaches..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                    </div>
+                    <ul class="py-1">
+                        <li>
+                            <button type="button" @click="selectedCoach = null; coachDropdownOpen = false" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none" :class="!selectedCoach ? 'bg-indigo-100' : ''">
+                                <div class="font-medium text-gray-900">No Coach</div>
+                            </button>
+                        </li>
+                        <template x-for="coach in coaches.filter(c => !coachSearch || c.name.toLowerCase().includes(coachSearch.toLowerCase()) || (c.email && c.email.toLowerCase().includes(coachSearch.toLowerCase())))" :key="coach.id">
+                            <li>
+                                <button type="button" @click="selectedCoach = coach.id; coachDropdownOpen = false" class="w-full text-left px-4 py-2 text-sm hover:bg-indigo-50 focus:bg-indigo-50 focus:outline-none" :class="selectedCoach === coach.id ? 'bg-indigo-100' : ''">
+                                    <div class="font-medium text-gray-900" x-text="coach.name"></div>
+                                    <div class="text-xs text-gray-500" x-text="coach.email || ''"></div>
+                                </button>
+                            </li>
+                        </template>
+                        <li x-show="coaches.filter(c => !coachSearch || c.name.toLowerCase().includes(coachSearch.toLowerCase()) || (c.email && c.email.toLowerCase().includes(coachSearch.toLowerCase()))).length === 0" class="px-4 py-2 text-sm text-gray-500">No coaches found</li>
+                    </ul>
+                </div>
+                @error('coach_id')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>

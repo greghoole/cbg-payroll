@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Coach;
 use App\Models\Client;
+use App\Models\Charge;
 use Illuminate\Http\Request;
 
 class CoachController extends Controller
@@ -36,13 +37,17 @@ class CoachController extends Controller
         $coach->load('clients.charges');
         
         // Calculate commission for this coach based on charge commission_percentage
+        // Include charges from clients AND charges with direct coach_id
         $commissionFromCharges = 0;
         $commissionsByMonth = [];
+        $processedChargeIds = []; // Track processed charges to avoid duplicates
         
+        // Process charges through clients
         foreach ($coach->clients as $client) {
             foreach ($client->charges as $charge) {
-                if ($charge->commission_percentage && $charge->payout) {
+                if ($charge->commission_percentage && $charge->payout && !in_array($charge->id, $processedChargeIds)) {
                     $commissionFromCharges += $charge->payout;
+                    $processedChargeIds[] = $charge->id;
                     
                     // Group by month (YYYY-MM format)
                     $monthKey = $charge->date->format('Y-m');
@@ -52,11 +57,67 @@ class CoachController extends Controller
                             'year' => $charge->date->format('Y'),
                             'month_number' => $charge->date->format('m'),
                             'total' => 0,
+                            'charges' => [],
                         ];
                     }
                     $commissionsByMonth[$monthKey]['total'] += $charge->payout;
+                    
+                    // Add charge details to the month
+                    $commissionsByMonth[$monthKey]['charges'][] = [
+                        'date' => $charge->date->format('M d, Y'),
+                        'client_name' => $client->name,
+                        'client_email' => $client->email,
+                        'amount' => $charge->amount_charged ?? $charge->net,
+                        'commission_percentage' => $charge->commission_percentage,
+                        'payout' => $charge->payout,
+                    ];
                 }
             }
+        }
+        
+        // Process charges with direct coach_id
+        $directCharges = Charge::where('coach_id', $coach->id)
+            ->whereNotNull('commission_percentage')
+            ->whereNotNull('payout')
+            ->where('payout', '>', 0)
+            ->with('client')
+            ->get();
+        
+        foreach ($directCharges as $charge) {
+            if (!in_array($charge->id, $processedChargeIds)) {
+                $commissionFromCharges += $charge->payout;
+                $processedChargeIds[] = $charge->id;
+                
+                // Group by month (YYYY-MM format)
+                $monthKey = $charge->date->format('Y-m');
+                if (!isset($commissionsByMonth[$monthKey])) {
+                    $commissionsByMonth[$monthKey] = [
+                        'month' => $charge->date->format('F Y'),
+                        'year' => $charge->date->format('Y'),
+                        'month_number' => $charge->date->format('m'),
+                        'total' => 0,
+                        'charges' => [],
+                    ];
+                }
+                $commissionsByMonth[$monthKey]['total'] += $charge->payout;
+                
+                // Add charge details to the month
+                $commissionsByMonth[$monthKey]['charges'][] = [
+                    'date' => $charge->date->format('M d, Y'),
+                    'client_name' => $charge->client ? $charge->client->name : 'No Client',
+                    'client_email' => $charge->client ? $charge->client->email : '—',
+                    'amount' => $charge->amount_charged ?? $charge->net,
+                    'commission_percentage' => $charge->commission_percentage,
+                    'payout' => $charge->payout,
+                ];
+            }
+        }
+        
+        // Sort charges within each month by date (most recent first)
+        foreach ($commissionsByMonth as &$monthData) {
+            usort($monthData['charges'], function($a, $b) {
+                return strtotime($b['date']) - strtotime($a['date']);
+            });
         }
         
         // Sort by most recent month first (descending)
