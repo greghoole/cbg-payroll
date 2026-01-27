@@ -66,11 +66,6 @@ class ChargeController extends Controller
             'country' => 'nullable|string|max:255',
         ]);
 
-        // Require coach_id if client_id is not set
-        if (empty($validated['client_id']) && empty($validated['coach_id'])) {
-            return back()->withErrors(['coach_id' => 'A coach must be selected when no client is selected.'])->withInput();
-        }
-
         $validated['billing_information_included'] = $request->has('billing_information_included');
         
         // Convert empty strings to null for nullable fields
@@ -80,8 +75,19 @@ class ChargeController extends Controller
         if (empty($validated['stripe_charge_id'])) {
             $validated['stripe_charge_id'] = null;
         }
-        if (empty($validated['coach_id'])) {
+        
+        // If program is empty, do not assign coach
+        $hasProgram = !empty($validated['program']);
+        if (!$hasProgram) {
             $validated['coach_id'] = null;
+        } else if (empty($validated['coach_id'])) {
+            $validated['coach_id'] = null;
+        }
+        
+        // Require coach_id if client_id is not set AND program is not empty
+        // (If program is empty, we don't assign a coach, so no validation needed)
+        if (empty($validated['client_id']) && empty($validated['coach_id']) && $hasProgram) {
+            return back()->withErrors(['coach_id' => 'A coach must be selected when no client is selected and program is provided.'])->withInput();
         }
 
         Charge::create($validated);
@@ -114,11 +120,6 @@ class ChargeController extends Controller
             'country' => 'nullable|string|max:255',
         ]);
 
-        // Require coach_id if client_id is not set
-        if (empty($validated['client_id']) && empty($validated['coach_id'])) {
-            return back()->withErrors(['coach_id' => 'A coach must be selected when no client is selected.'])->withInput();
-        }
-
         $validated['billing_information_included'] = $request->has('billing_information_included');
         
         // Convert empty strings to null for nullable fields
@@ -128,8 +129,19 @@ class ChargeController extends Controller
         if (empty($validated['stripe_charge_id'])) {
             $validated['stripe_charge_id'] = null;
         }
-        if (empty($validated['coach_id'])) {
+        
+        // If program is empty, do not assign coach
+        $hasProgram = !empty($validated['program']);
+        if (!$hasProgram) {
             $validated['coach_id'] = null;
+        } else if (empty($validated['coach_id'])) {
+            $validated['coach_id'] = null;
+        }
+        
+        // Require coach_id if client_id is not set AND program is not empty
+        // (If program is empty, we don't assign a coach, so no validation needed)
+        if (empty($validated['client_id']) && empty($validated['coach_id']) && $hasProgram) {
+            return back()->withErrors(['coach_id' => 'A coach must be selected when no client is selected and program is provided.'])->withInput();
         }
 
         $charge->update($validated);

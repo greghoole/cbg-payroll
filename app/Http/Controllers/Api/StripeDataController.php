@@ -63,9 +63,13 @@ class StripeDataController extends Controller
                 $client->save();
             }
 
-            // If coach is provided, assign coach to client
+            // Check if program is provided - only assign coach if program is not empty
+            $program = $validated['program'] ?? null;
+            $hasProgram = !empty($program);
+
+            // If coach is provided and program is not empty, assign coach to client
             $coach = null;
-            if (!empty($validated['coach'])) {
+            if ($hasProgram && !empty($validated['coach'])) {
                 $coach = Coach::firstOrCreate(
                     ['name' => $validated['coach']],
                     ['email' => null]
@@ -75,11 +79,12 @@ class StripeDataController extends Controller
                 if ($client->coach_id !== $coach->id) {
                     $client->update(['coach_id' => $coach->id]);
                 }
-            } else {
-                // If no coach provided, check if client already has a coach
+            } else if ($hasProgram) {
+                // If no coach provided but program exists, check if client already has a coach
                 $client->load('coach');
                 $coach = $client->coach;
             }
+            // If program is empty, do not assign coach (coach remains null)
 
             // Find or create charge
             $charge = Charge::updateOrCreate(
@@ -89,16 +94,18 @@ class StripeDataController extends Controller
                     'date' => $validated['date'],
                     'net' => $validated['net'],
                     'amount_charged' => $validated['amount_charged'],
-                    'program' => $validated['program'] ?? null,
+                    'program' => $program,
                     'stripe_url' => $validated['stripe_url'] ?? null,
                     'stripe_charge_id' => $validated['id'] ?? $validated['transaction_id'],
                     'billing_information_included' => $validated['billing_information_is_included'] ?? false,
                     'country' => $validated['country'] ?? null,
+                    'coach_id' => $hasProgram ? ($coach?->id ?? null) : null, // Only set coach_id if program exists
                 ]
             );
 
             // If client has a coach and charge doesn't have commission, apply existing commission
-            if ($coach && !$charge->commission_percentage) {
+            // Only apply if program is not empty
+            if ($hasProgram && $coach && !$charge->commission_percentage) {
                 // Find the most recent charge for this client with a commission percentage
                 $existingCharge = Charge::where('client_id', $client->id)
                     ->where('id', '!=', $charge->id)
